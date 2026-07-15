@@ -1,0 +1,98 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#4facfe,#00f2fe);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    width:400px;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0px 10px 20px rgba(0,0,0,0.3);
+}
+
+.project-name{
+    text-align:center;
+    color:#0b5394;
+    font-size:18px;
+    font-weight:bold;
+}
+
+h1{
+    text-align:center;
+    color:#00695c;
+    margin:10px 0 20px;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:16px;
+}
+
+.buttons{
+    display:flex;
+    justify-content:space-between;
+    margin-top:25px;
+}
+
+button{
+    width:48%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.calculate{
+    background:#28a745;
+}
+
+.calculate:hover{
+    background:#218838;
+}
+
+.reset{
+    background:#dc3545;
+}
+
+.reset:hover{
+    background:#c82333;
+}
+
+#result{
+    margin-top:20px;
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    color:#004d40;
+}
+
+#category{
+    margin-top:12px;
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    color:#0b5394;
+}
