@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interest Calculator</title>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #e9eff9; --panel: #ffffff; --ink: #14233f; --muted: #5a6a88;
+    --line: #d3dcee; --brand: #2b45b0; --brand-ink: #ffffff;
+    --principal: #2f6fd1; --interest: #e08a00; --final: #0b7a75;
+    --err: #b3261e; --err-bg: #fdecea; --soft: #f1f5fc;
+    --hero1: #10245a; --hero2: #1f5f9e; --accent2: #0b7a75;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1426; --panel: #131f38; --ink: #e8eefb; --muted: #9bacce;
+      --line: #263759; --brand: #7d93ff; --brand-ink: #0b1230;
+      --principal: #7fb0e6; --interest: #f0b64c; --final: #1fa8a0;
+      --err: #ffb4ab; --err-bg: #3a1c1a; --soft: #19284a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1426; --panel: #131f38; --ink: #e8eefb; --muted: #9bacce;
+    --line: #263759; --brand: #7d93ff; --brand-ink: #0b1230;
+    --principal: #7fb0e6; --interest: #f0b64c; --final: #1fa8a0;
+    --err: #ffb4ab; --err-bg: #3a1c1a; --soft: #19284a;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .page { max-width: 980px; margin: 0 auto; padding: 24px 16px 40px; }
+  header { background: linear-gradient(120deg, var(--hero1), var(--hero2)); color: #fff; border-radius: 14px; padding: 22px 22px 20px; margin-bottom: 16px; border-bottom: 4px solid var(--interest); }
+  header h1 { margin: 0 0 4px; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.01em; }
+  header p { margin: 0; color: #d6e3f7; }
+
+  .layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 760px) { .layout { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--brand); border-radius: 14px; padding: 20px; box-shadow: 0 6px 18px rgba(16,36,90,0.08); }
+  .panel + .panel { border-top-color: var(--final); }
+  .panel h2 { margin: 0 0 16px; font-size: 1.05rem; }
+
+  .field { margin-bottom: 20px; }
+  label, .label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
+  .hint { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+  .money { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .money:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+  .money span { padding: 0 4px 0 14px; color: var(--muted); font-size: 1.1rem; }
+  .money input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 1.1rem; padding: 12px 14px 12px 4px; outline: none; }
+
+  .rate-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .rate-value { font-weight: 700; color: var(--brand); font-size: 1.2rem; }
+  input[type=range] { width: 100%; accent-color: var(--brand); height: 28px; }
+  .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.8rem; }
+
+  .periods { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; }
+  .periods button {
+    border: 1.5px solid var(--line); background: var(--panel); color: var(--ink);
+    border-radius: 10px; padding: 10px 6px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .periods button:hover { border-color: var(--brand); }
+  .periods button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+
+  .actions { display: flex; gap: 10px; }
+  .btn { flex: 1; padding: 13px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; border: 1.5px solid var(--brand); }
+  .btn.primary { background: linear-gradient(120deg, var(--brand), #3f63d6); color: var(--brand-ink); }
+  .btn.secondary { background: transparent; color: var(--brand); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+  .error { display: none; background: var(--err-bg); color: var(--err); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; font-size: 0.92rem; }
+  .error.show { display: block; }
+
+  .assume { border-left: 4px solid var(--interest); background: var(--soft); border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; color: var(--muted); margin-top: 16px; }
+  .assume strong { color: var(--ink); }
+  .assume ul { margin: 6px 0 0; padding-left: 18px; }
+
+  .empty { color: var(--muted); text-align: center; padding: 36px 8px; }
+
+  .final-box { background: linear-gradient(120deg, var(--final), #12918a); color: var(--brand-ink); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  .final-box .k { font-size: 0.9rem; opacity: 0.9; }
+  .final-box .v { font-size: clamp(1.8rem, 6vw, 2.4rem); font-weight: 700; word-break: break-all; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .tile { border: 1px solid var(--line); border-left-width: 5px; border-radius: 10px; padding: 10px 12px; }
+  .tile.p { border-left-color: var(--principal); background: color-mix(in srgb, var(--principal) 10%, var(--panel)); }
+  .tile.i { border-left-color: var(--interest); background: color-mix(in srgb, var(--interest) 12%, var(--panel)); }
+  .tile .k { font-size: 0.82rem; color: var(--muted); }
+  .tile .v { font-weight: 700; font-size: 1.1rem; word-break: break-all; }
+
+  .bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 14px; background: var(--line); }
+  .bar .bp { background: var(--principal); } .bar .bi { background: var(--interest); }
+
+  dl.facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0 0 14px; font-size: 0.95rem; }
+  dl.facts dt { color: var(--muted); } dl.facts dd { margin: 0; text-align: right; font-weight: 600; }
+
+  .how { border-left: 4px solid var(--brand); background: var(--soft); border-radius: 10px; padding: 12px 14px; font-size: 0.9rem; }
+  .how h3 { margin: 0 0 6px; font-size: 0.95rem; }
+  .how code { display: block; overflow-x: auto; white-space: nowrap; padding: 4px 0; font-family: Consolas, "Courier New", monospace; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Interest Calculator</h1>
+    <p>See what your money earns over one compounding period.</p>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-labelledby="in-h">
+      <h2 id="in-h">Your investment</h2>
+      <div id="error" class="error" role="alert"></div>
+
+      <div class="field">
+        <label for="principal">Principal amount</label>
+        <div class="money"><span>₹</span><input id="principal" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 10000"></div>
+        <div class="hint">Must be greater than ₹0.</div>
+      </div>
+
+      <div class="field">
+        <div class="rate-head"><label for="rate">Interest rate</label><span class="rate-value" id="rateOut">3.0%</span></div>
+        <input id="rate" type="range" min="1" max="5" step="0.5" value="3">
+        <div class="ticks"><span>1%</span><span>2%</span><span>3%</span><span>4%</span><span>5%</span></div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="period-label">Compounding period</div>
+        <div class="periods" id="periods" role="group" aria-labelledby="period-label"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="calc" type="button">Calculate</button>
+        <button class="btn secondary" id="reset" type="button">Reset</button>
+      </div>
+
+      <div class="assume">
+        <strong>Assumptions</strong>
+        <ul>
+          <li>The rate is applied <strong>per selected period</strong>, not per year.</li>
+          <li>The selected period is both the investment duration and one compounding interval, so n = 1.</li>
+          <li>No deposits, withdrawals, fees, or taxes.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="out-h" aria-live="polite">
+      <h2 id="out-h">Result</h2>
+      <div id="result"><div class="empty">Enter an amount and choose Calculate to see your result.</div></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ---------- Settings ----------
+  const PERIODS = [
+    { label: "1 Month", months: 1 },
+    { label: "3 Months", months: 3 },
+    { label: "6 Months", months: 6 },
+    { label: "9 Months", months: 9 },
+    { label: "1 Year", months: 12 }
+  ];
+  const MIN_RATE = 1, MAX_RATE = 5;
+  const DEFAULTS = { rate: 3, periodIndex: 0 };
+  let selectedPeriod = DEFAULTS.periodIndex;
+
+  // ---------- Element references ----------
+  const $ = (id) => document.getElementById(id);
+  const principalInput = $("principal"), rateInput = $("rate"), rateOut = $("rateOut");
+  const periodsBox = $("periods"), errorBox = $("error"), resultBox = $("result");
+
+  // ---------- Helpers ----------
+  function formatMoney(value) {
+    return "₹" + value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Compound interest: A = P (1 + r)^n, with r as a decimal.
+  function compound(principal, ratePercent, periods) {
+    const r = ratePercent / 100;
+    const finalAmount = principal * Math.pow(1 + r, periods);
+    return { finalAmount, interest: finalAmount - principal };
+  }
+
+  // Returns an error message, or "" if the inputs are valid.
+  function validate(principalText, rate) {
+    if (principalText.trim() === "") return "Enter a principal amount.";
+    const principal = Number(principalText);
+    if (!Number.isFinite(principal)) return "Principal must be a valid number.";
+    if (principal <= 0) return "Principal must be greater than ₹0.";
+    if (principal > 1e12) return "Principal is too large. Enter ₹1,000,000,000,000 or less.";
+    if (!Number.isFinite(rate) || rate < MIN_RATE || rate > MAX_RATE) return "Interest rate must be between 1% and 5%.";
+    return "";
+  }
+
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.toggle("show", !!msg); }
+
+  // ---------- Period buttons ----------
+  function renderPeriods() {
+    periodsBox.innerHTML = "";
+    PERIODS.forEach((p, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = p.label;
+      b.setAttribute("aria-pressed", i === selectedPeriod);
+      b.addEventListener("click", () => { selectedPeriod = i; renderPeriods(); });
+      periodsBox.appendChild(b);
+    });
+  }
+
+  // ---------- Result card ----------
+  function renderResult(principal, rate, period, out) {
+    const pPct = (principal / out.finalAmount) * 100;
+    resultBox.innerHTML = `
+      <div class="final-box"><div class="k">Final amount</div><div class="v">${formatMoney(out.finalAmount)}</div></div>
+      <div class="split">
+        <div class="tile p"><div class="k">Principal</div><div class="v">${formatMoney(principal)}</div></div>
+        <div class="tile i"><div class="k">Interest earned</div><div class="v">${formatMoney(out.interest)}</div></div>
+      </div>
+      <div class="bar" aria-hidden="true"><div class="bp" style="width:${pPct}%"></div><div class="bi" style="width:${100 - pPct}%"></div></div>
+      <dl class="facts">
+        <dt>Principal amount</dt><dd>${formatMoney(principal)}</dd>
+        <dt>Interest rate</dt><dd>${rate}% per ${period.label.toLowerCase().replace(/^1 /, "")}</dd>
+        <dt>Selected period</dt><dd>${period.label}</dd>
+        <dt>Interest earned</dt><dd>${formatMoney(out.interest)}</dd>
+        <dt>Final amount</dt><dd>${formatMoney(out.finalAmount)}</dd>
+      </dl>
+      <div class="how">
+        <h3>How this was calculated</h3>
+        <code>A = P × (1 + r)<sup>n</sup></code>
+        <code>P = ${formatMoney(principal)}, r = ${rate}% = ${rate / 100}, n = 1</code>
+        <code>A = ${formatMoney(principal)} × ${(1 + rate / 100).toFixed(4)} = ${formatMoney(out.finalAmount)}</code>
+        <code>Interest = A − P = ${formatMoney(out.interest)}</code>
+      </div>`;
+  }
+
+  // ---------- Actions ----------
+  function onCalculate() {
+    const rate = Number(rateInput.value);
+    const msg = validate(principalInput.value, rate);
+    showError(msg);
+    if (msg) {
+      resultBox.innerHTML = '<div class="empty">Fix the highlighted issue and calculate again.</div>';
+      return;
+    }
+    const principal = Number(principalInput.value);
+    const period = PERIODS[selectedPeriod];
+    // The selected period is one compounding interval, so n = 1.
+    renderResult(principal, rate, period, compound(principal, rate, 1));
+  }
+
+  function onReset() {
+    principalInput.value = "";
+    rateInput.value = DEFAULTS.rate; rateOut.textContent = DEFAULTS.rate.toFixed(1) + "%";
+    selectedPeriod = DEFAULTS.periodIndex; renderPeriods();
+    showError("");
+    resultBox.innerHTML = '<div class="empty">Enter an amount and choose Calculate to see your result.</div>';
+    principalInput.focus();
+  }
+
+  rateInput.addEventListener("input", () => { rateOut.textContent = Number(rateInput.value).toFixed(1) + "%"; });
+  principalInput.addEventListener("keydown", (e) => { if (e.key === "Enter") onCalculate(); });
+  $("calc").addEventListener("click", onCalculate);
+  $("reset").addEventListener("click", onReset);
+  renderPeriods();
+</script>
+</body>
+</html>
